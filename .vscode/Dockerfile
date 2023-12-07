@@ -1,12 +1,19 @@
-FROM node:16-alpine
+FROM jenkins/jenkins:latest
 
-WORKDIR /app
+USER root
 
-COPY package.json package-lock.json ./
-RUN npm install
+# Update the packages
+RUN apt-get update && apt-get install --yes apt-transport-https ca-certificates curl software-properties-common
 
-COPY hello.js .
+# Add Docker repository
+RUN curl -sL "https://download.docker.com/linux/debian/gpg" | apt-key add -
+RUN add-apt-repository "deb https://download.docker.com/linux/debian $(lsb_release -cs) stable"
 
-EXPOSE 3000
+# Install Docker CE CLI
+RUN apt-get update && apt-get install --yes docker-ce-cli
 
-CMD [ "node", "hello.js" ]
+# Switch to Jenkins user
+USER jenkins
+
+# Install latest plugins
+RUN jenkins-plugin-cli --plugins "blueocean:latest docker-workflow:latest"
